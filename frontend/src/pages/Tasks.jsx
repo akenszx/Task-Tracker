@@ -17,6 +17,7 @@ export default function Tasks() {
   const [statusFilter, setStatusFilter] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [search, setSearch] = useState('');
+  const [sort, setSort] = useState('');
   const [page, setPage] = useState(1);
 
   const [loading, setLoading] = useState(true);
@@ -44,6 +45,7 @@ export default function Tasks() {
       if (statusFilter) params.status = statusFilter;
       if (categoryFilter) params.category_id = categoryFilter;
       if (search) params.search = search;
+      if (sort) params.sort = sort;
 
       const res = await client.get('/tasks', { params });
       setTasks(res.data.tasks);
@@ -53,7 +55,7 @@ export default function Tasks() {
     } finally {
       setLoading(false);
     }
-  }, [page, statusFilter, categoryFilter, search]);
+  }, [page, statusFilter, categoryFilter, search, sort]);
 
   useEffect(() => {
     fetchCategories();
@@ -63,7 +65,7 @@ export default function Tasks() {
     fetchTasks();
   }, [fetchTasks]);
 
-  // Reset to page 1 whenever a filter/search changes so results aren't
+  // Reset to page 1 whenever a filter/search/sort changes so results aren't
   // stuck on an out-of-range page.
   function handleStatusChange(value) {
     setStatusFilter(value);
@@ -75,6 +77,10 @@ export default function Tasks() {
   }
   function handleSearchChange(value) {
     setSearch(value);
+    setPage(1);
+  }
+  function handleSortChange(value) {
+    setSort(value);
     setPage(1);
   }
 
@@ -158,6 +164,12 @@ export default function Tasks() {
           {categories.map((cat) => (
             <option key={cat.id} value={cat.id}>{cat.name}</option>
           ))}
+        </select>
+
+        <select value={sort} onChange={(e) => handleSortChange(e.target.value)}>
+          <option value="">Sort: Newest first</option>
+          <option value="due_date">Sort: Due Date</option>
+          <option value="status">Sort: Status</option>
         </select>
 
         <button type="button" className="btn-secondary" onClick={() => setShowCategories(true)}>

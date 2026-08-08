@@ -3,10 +3,10 @@ const { Task, Category } = require('../models');
 
 const VALID_STATUSES = ['pending', 'in_progress', 'completed'];
 
-// GET /api/tasks?status=&category_id=&search=&page=&limit=
+// GET /api/tasks?status=&category_id=&search=&page=&limit=&sort=
 async function listTasks(req, res) {
   try {
-    const { status, category_id, search } = req.query;
+    const { status, category_id, search, sort } = req.query;
     const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
     const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 10, 1), 100);
     const offset = (page - 1) * limit;
@@ -28,10 +28,18 @@ async function listTasks(req, res) {
       where.title = { [Op.like]: `%${search}%` };
     }
 
+    // Sorting: defaults to newest-first. ?sort=due_date or ?sort=status
+    // switches to that field, ascending.
+    const SORTABLE_FIELDS = { due_date: 'due_date', status: 'status' };
+    let order = [['created_at', 'DESC']];
+    if (sort && SORTABLE_FIELDS[sort]) {
+      order = [[SORTABLE_FIELDS[sort], 'ASC']];
+    }
+
     const { count, rows } = await Task.findAndCountAll({
       where,
       include: [{ model: Category, attributes: ['id', 'name'] }],
-      order: [['created_at', 'DESC']],
+      order,
       limit,
       offset,
     });
